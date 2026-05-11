@@ -1,12 +1,41 @@
 const Inicio = require('../models/inicioModel');
 
-const obtenerInicio = (req,res) => {
+// Ruta principal del sistema
+const obtenerInicio = (req, res) => {
 
-    Inicio.totalCitas((err,results)=>{
+    Inicio.totalCitas((err, results) => {
 
-        if(err) return res.status(500).json(err);
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
+        }
 
-        const totalCitas = results[0].total;
-        res.json({totalCitas});
+        res.status(200).json({
+
+            sistema: 'MediCitas',
+
+            mensaje:
+                'Bienvenido al sistema de gestión médica MediCitas',
+
+            fechaServidor: new Date().toISOString(),
+
+            modulos: [
+                'Usuarios',
+                'Doctores',
+                'Especialidades',
+                'Citas',
+                'Historial Médico'
+            ],
+
+            totalCitas: results[0].total
+
+        });
+
     });
-}
+
+};
+
+module.exports = {
+    obtenerInicio
+};
