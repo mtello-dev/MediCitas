@@ -1,13 +1,45 @@
-const db = require('../config/db');
+const db = require('../config/database');
 
 const Auth = {
+
+    // Buscar usuario por email
     findByEmail: (email, callback) => {
-        db.query('SELECT * FROM usuarios WHERE email = ?', [email], callback);
+
+        const sql = `
+            SELECT *
+            FROM usuarios
+            WHERE email = ?
+        `;
+
+        db.query(sql, [email], callback);
+
     },
 
-    createUser: (data, callback) => {
-        db.query('INSERT INTO usuarios SET ?', [data], callback);
+    // Crear usuario
+    createUser: (usuario, callback) => {
+
+        const sql = `
+            INSERT INTO usuarios
+            (
+                nombre,
+                email,
+                password
+            )
+            VALUES (?, ?, ?)
+        `;
+
+        db.query(
+            sql,
+            [
+                usuario.nombre,
+                usuario.email,
+                usuario.password
+            ],
+            callback
+        );
+
     }
+
 };
 
 module.exports = Auth;

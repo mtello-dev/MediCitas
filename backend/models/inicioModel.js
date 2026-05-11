@@ -1,9 +1,19 @@
-const db = require('../config/db');
+const db = require('../config/database');
 
 const Inicio = {
+
+    // Contar total de citas
     totalCitas: (callback) => {
-        db.query('SELECT COUNT(*) AS total FROM citas', callback);
+
+        const sql = `
+            SELECT COUNT(*) AS total
+            FROM citas
+        `;
+
+        db.query(sql, callback);
+
     }
+
 };
 
-module.exports = Inicio
+module.exports = Inicio;
