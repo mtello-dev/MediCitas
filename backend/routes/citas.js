@@ -4,9 +4,12 @@ const router = express.Router();
 
 const citaController = require('../controllers/citaController');
 
+const verificarToken = require('../middlewares/authMiddleware');
+
 // Obtener todas las citas
 router.get(
     '/',
+    verificarToken,
     citaController.getAll
 );
 
