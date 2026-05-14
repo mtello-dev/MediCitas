@@ -1,6 +1,6 @@
 # MediCitas
 
-Sistema web de gestión de citas médicas desarrollado con Node.js, Express y MySQL.
+Sistema web de gestión de citas médicas.
 
 ---
 
