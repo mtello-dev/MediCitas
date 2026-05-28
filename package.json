@@ -1,0 +1,13 @@
+{
+  "name": "medicitas-main",
+  "version": "1.1.0",
+  "description": "Sistema web de gestión de citas médicas.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
