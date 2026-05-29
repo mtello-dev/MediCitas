@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Doctores - MediCitas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="inicio.html">MediCitas</a>
+            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <h2 class="fw-bold mb-4">Doctores</h2>
+
+        <div id="alerta"></div>
+
+        <div class="d-flex justify-content-between mb-3">
+            <input type="text" id="buscador" class="form-control w-50" placeholder="Buscar doctor...">
+            <a href="doctor-registrar.html" class="btn btn-success">Nuevo doctor</a>
+        </div>
+
+        <table class="table table-bordered table-striped bg-white shadow-sm">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Especialidad</th>
+                    <th>Experiencia</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaDoctores"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api/doctores';
+        const token = sessionStorage.getItem('token');
+
+        if (!token) window.location.href = 'login.html';
+
+        let doctores = [];
+
+        function cargarDoctores() {
+            fetch(API, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then(res => validarSesion(res))
+                .then(data => {
+                    doctores = data || [];
+                    mostrarDoctores(doctores);
+                })
+                .catch(() => mostrarAlerta('Error al cargar doctores', 'danger'));
+        }
+
+        function mostrarDoctores(lista) {
+            const tabla = document.getElementById('tablaDoctores');
+            tabla.innerHTML = '';
+
+            lista.forEach(doctor => {
+                tabla.innerHTML += `
+            <tr>
+                <td>${doctor.id}</td>
+                <td>${doctor.nombre}</td>
+                <td>${doctor.email}</td>
+                <td>${doctor.telefono}</td>
+                <td>${doctor.especialidad || doctor.especialidad_id}</td>
+                <td>${doctor.experiencia} años</td>
+                <td>
+                    <a href="doctor-editar.html?id=${doctor.id}" class="btn btn-warning btn-sm">Editar</a>
+                    <button onclick="eliminarDoctor(${doctor.id})" class="btn btn-danger btn-sm">Eliminar</button>
+                </td>
+            </tr>
+        `;
+            });
+        }
+
+        function eliminarDoctor(id) {
+            if (!confirm('¿Seguro que deseas eliminar este doctor?')) return;
+
+            fetch(`${API}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then(res => validarSesion(res))
+                .then(() => {
+                    mostrarAlerta('Doctor eliminado correctamente', 'success');
+                    cargarDoctores();
+                })
+                .catch(() => mostrarAlerta('Error al eliminar doctor', 'danger'));
+        }
+
+        document.getElementById('buscador').addEventListener('input', e => {
+            const texto = e.target.value.toLowerCase();
+
+            const filtrados = doctores.filter(doctor =>
+                doctor.nombre.toLowerCase().includes(texto) ||
+                doctor.email.toLowerCase().includes(texto) ||
+                String(doctor.especialidad || '').toLowerCase().includes(texto)
+            );
+
+            mostrarDoctores(filtrados);
+        });
+
+        function validarSesion(res) {
+            if (res.status === 401 || res.status === 403) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+            return res.json();
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            document.getElementById('alerta').innerHTML = `
+        <div class="alert alert-${tipo}">${mensaje}</div>
+    `;
+        }
+
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        cargarDoctores();
+    </script>
+
+</body>
+
+</html>
