@@ -4,10 +4,12 @@ const router = express.Router();
 
 const inicioController = require('../controllers/inicioController');
 
-// Ruta principal
+const verificarToken = require('../middlewares/authMiddleware');
+
 router.get(
     '/',
-    inicioController.obtenerInicio
+    verificarToken,
+    inicioController.getInicio
 );
 
 module.exports = router;

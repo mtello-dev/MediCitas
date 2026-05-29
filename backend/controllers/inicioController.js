@@ -1,9 +1,8 @@
-const Inicio = require('../models/inicioModel');
+const db = require('../config/database');
 
-// Ruta principal del sistema
-const obtenerInicio = (req, res) => {
+const getInicio = (req, res) => {
 
-    Inicio.totalCitas((err, results) => {
+    db.query('SELECT COUNT(*) AS total FROM usuarios', (err, usuarios) => {
 
         if (err) {
             return res.status(500).json({
@@ -11,24 +10,29 @@ const obtenerInicio = (req, res) => {
             });
         }
 
-        res.status(200).json({
+        db.query('SELECT COUNT(*) AS total FROM citas', (err, citas) => {
 
-            sistema: 'MediCitas',
+            if (err) {
+                return res.status(500).json({
+                    error: err.message
+                });
+            }
 
-            mensaje:
-                'Bienvenido al sistema de gestión médica MediCitas',
-
-            fechaServidor: new Date().toISOString(),
-
-            modulos: [
-                'Usuarios',
-                'Doctores',
-                'Especialidades',
-                'Citas',
-                'Historial Médico'
-            ],
-
-            totalCitas: results[0].total
+            res.json({
+                mensaje: 'Bienvenido al sistema MediCitas',
+                fecha: new Date().toISOString(),
+                módulos: [
+                    'usuarios',
+                    'doctores',
+                    'especialidades',
+                    'citas',
+                    'historial'
+                ],
+                resumen: {
+                    total_usuarios: usuarios[0].total,
+                    total_citas: citas[0].total
+                }
+            });
 
         });
 
@@ -37,5 +41,5 @@ const obtenerInicio = (req, res) => {
 };
 
 module.exports = {
-    obtenerInicio
+    getInicio
 };

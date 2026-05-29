@@ -112,7 +112,8 @@ const login = (req, res) => {
 
         res.json({
             mensaje: 'Login exitoso',
-            token
+            token,
+            nombre: usuario.nombre
         });
 
     });
