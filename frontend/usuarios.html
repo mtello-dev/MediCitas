@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Usuarios - MediCitas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="inicio.html">MediCitas</a>
+            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <h2 class="fw-bold mb-4">Usuarios</h2>
+
+        <div id="alerta"></div>
+
+        <div class="d-flex justify-content-between mb-3">
+            <input type="text" id="buscador" class="form-control w-50" placeholder="Buscar usuario...">
+            <a href="usuario-registrar.html" class="btn btn-success">Nuevo usuario</a>
+        </div>
+
+        <table class="table table-bordered table-striped bg-white shadow-sm">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaUsuarios"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api/usuarios';
+        const token = sessionStorage.getItem('token');
+
+        if (!token) window.location.href = 'login.html';
+
+        let usuarios = [];
+
+        function cargarUsuarios() {
+            fetch(API, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then(res => validarSesion(res))
+                .then(data => {
+                    usuarios = data || [];
+                    mostrarUsuarios(usuarios);
+                })
+                .catch(() => mostrarAlerta('Error al cargar usuarios', 'danger'));
+        }
+
+        function mostrarUsuarios(lista) {
+            const tabla = document.getElementById('tablaUsuarios');
+            tabla.innerHTML = '';
+
+            lista.forEach(usuario => {
+                tabla.innerHTML += `
+            <tr>
+                <td>${usuario.id}</td>
+                <td>${usuario.nombre}</td>
+                <td>${usuario.email}</td>
+                <td>
+                    <a href="usuario-editar.html?id=${usuario.id}" class="btn btn-warning btn-sm">Editar</a>
+                    <button onclick="eliminarUsuario(${usuario.id})" class="btn btn-danger btn-sm">Eliminar</button>
+                </td>
+            </tr>
+        `;
+            });
+        }
+
+        function eliminarUsuario(id) {
+            if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
+
+            fetch(`${API}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then(res => validarSesion(res))
+                .then(() => {
+                    mostrarAlerta('Usuario eliminado correctamente', 'success');
+                    cargarUsuarios();
+                })
+                .catch(() => mostrarAlerta('Error al eliminar usuario', 'danger'));
+        }
+
+        document.getElementById('buscador').addEventListener('input', e => {
+            const texto = e.target.value.toLowerCase();
+
+            const filtrados = usuarios.filter(usuario =>
+                usuario.nombre.toLowerCase().includes(texto) ||
+                usuario.email.toLowerCase().includes(texto)
+            );
+
+            mostrarUsuarios(filtrados);
+        });
+
+        function validarSesion(res) {
+            if (res.status === 401 || res.status === 403) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+            return res.json();
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            document.getElementById('alerta').innerHTML = `
+        <div class="alert alert-${tipo}">${mensaje}</div>
+    `;
+        }
+
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        cargarUsuarios();
+    </script>
+
+</body>
+
+</html>
