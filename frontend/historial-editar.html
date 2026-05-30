@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Historial Médico - MediCitas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="inicio.html">MediCitas</a>
+            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+
+                <h2 class="fw-bold mb-4">Editar Historial Médico</h2>
+
+                <div id="alerta"></div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+
+                        <form onsubmit="event.preventDefault(); actualizarHistorial();">
+
+                            <div class="mb-3">
+                                <label class="form-label">ID del paciente</label>
+                                <input type="number" id="usuario_id" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Diagnóstico</label>
+                                <textarea id="diagnostico" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tratamiento</label>
+                                <textarea id="tratamiento" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Fecha</label>
+                                <input type="date" id="fecha" class="form-control">
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="historial.html" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-warning" id="btnGuardar">
+                                    Actualizar
+                                </button>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api/historial';
+        const token = sessionStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+
+        if (!id) {
+            window.location.href = 'historial.html';
+        }
+
+        function cargarHistorial() {
+            fetch(`${API}/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then(res => validarSesion(res))
+                .then(historial => {
+                    if (!historial) return;
+
+                    document.getElementById('usuario_id').value = historial.usuario_id || '';
+                    document.getElementById('diagnostico').value = historial.diagnostico || '';
+                    document.getElementById('tratamiento').value = historial.tratamiento || '';
+
+                    if (historial.fecha) {
+                        document.getElementById('fecha').value = historial.fecha.substring(0, 10);
+                    }
+                })
+                .catch(() => {
+                    mostrarAlerta('Error al cargar el historial médico', 'danger');
+                });
+        }
+
+        function actualizarHistorial() {
+            const usuario_id = document.getElementById('usuario_id').value;
+            const diagnostico = document.getElementById('diagnostico').value.trim();
+            const tratamiento = document.getElementById('tratamiento').value.trim();
+            const fecha = document.getElementById('fecha').value;
+            const btn = document.getElementById('btnGuardar');
+
+            if (!usuario_id || !diagnostico || !tratamiento || !fecha) {
+                mostrarAlerta('Todos los campos son obligatorios', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Actualizando...';
+
+            fetch(`${API}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    usuario_id: Number(usuario_id),
+                    diagnostico,
+                    tratamiento,
+                    fecha
+                })
+            })
+                .then(res => validarSesion(res))
+                .then(data => {
+                    if (!data) return;
+
+                    if (data.error) {
+                        mostrarAlerta(data.error, 'danger');
+                        return;
+                    }
+
+                    mostrarAlerta('Historial médico actualizado correctamente', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = 'historial.html';
+                    }, 1200);
+                })
+                .catch(() => {
+                    mostrarAlerta('Error al actualizar el historial médico', 'danger');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Actualizar';
+                });
+        }
+
+        function validarSesion(res) {
+            if (res.status === 401 || res.status === 403) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            return res.json();
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            document.getElementById('alerta').innerHTML = `
+        <div class="alert alert-${tipo} alert-dismissible fade show">
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+        }
+
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        cargarHistorial();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
