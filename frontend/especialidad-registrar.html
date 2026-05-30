@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Especialidad - MediCitas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="inicio.html">MediCitas</a>
+            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+
+                <h2 class="fw-bold mb-4">Registrar Especialidad</h2>
+
+                <div id="alerta"></div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+
+                        <form onsubmit="event.preventDefault(); registrarEspecialidad();">
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre de la especialidad</label>
+                                <input type="text" id="nombre" class="form-control" placeholder="Ej. Cardiología">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea id="descripcion" class="form-control" rows="4"
+                                    placeholder="Descripción de la especialidad"></textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="especialidades.html" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-success" id="btnGuardar">Guardar</button>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api/especialidades';
+        const token = sessionStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        function registrarEspecialidad() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const descripcion = document.getElementById('descripcion').value.trim();
+            const btn = document.getElementById('btnGuardar');
+
+            if (!nombre || !descripcion) {
+                mostrarAlerta('Todos los campos son obligatorios', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+
+            fetch(API, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    nombre,
+                    descripcion
+                })
+            })
+                .then(res => validarSesion(res))
+                .then(data => {
+                    if (!data) return;
+
+                    if (data.error) {
+                        mostrarAlerta(data.error, 'danger');
+                        return;
+                    }
+
+                    mostrarAlerta('Especialidad registrada correctamente', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = 'especialidades.html';
+                    }, 1200);
+                })
+                .catch(() => {
+                    mostrarAlerta('Error al registrar especialidad', 'danger');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Guardar';
+                });
+        }
+
+        function validarSesion(res) {
+            if (res.status === 401 || res.status === 403) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            return res.json();
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            document.getElementById('alerta').innerHTML = `
+        <div class="alert alert-${tipo} alert-dismissible fade show">
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+        }
+
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

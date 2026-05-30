@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Doctor - MediCitas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="inicio.html">MediCitas</a>
+            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+
+                <h2 class="fw-bold mb-4">Registrar Doctor</h2>
+
+                <div id="alerta"></div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+
+                        <form onsubmit="event.preventDefault(); registrarDoctor();">
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre del doctor</label>
+                                <input type="text" id="nombre" class="form-control" placeholder="Ej. Dr. Juan Pérez">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Correo electrónico</label>
+                                <input type="email" id="email" class="form-control" placeholder="doctor@medicitas.com">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Teléfono</label>
+                                <input type="text" id="telefono" class="form-control" placeholder="4871234567">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Especialidad ID</label>
+                                <input type="number" id="especialidad_id" class="form-control" placeholder="Ej. 1">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Años de experiencia</label>
+                                <input type="number" id="experiencia" class="form-control" placeholder="Ej. 10">
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="doctores.html" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-success" id="btnGuardar">Guardar</button>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api/doctores';
+        const token = sessionStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        function registrarDoctor() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const especialidad_id = document.getElementById('especialidad_id').value;
+            const experiencia = document.getElementById('experiencia').value;
+            const btn = document.getElementById('btnGuardar');
+
+            if (!nombre || !email || !telefono || !especialidad_id || !experiencia) {
+                mostrarAlerta('Todos los campos son obligatorios', 'warning');
+                return;
+            }
+
+            if (Number(experiencia) < 0) {
+                mostrarAlerta('La experiencia no puede ser negativa', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+
+            fetch(API, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    nombre,
+                    email,
+                    telefono,
+                    especialidad_id: Number(especialidad_id),
+                    experiencia: Number(experiencia)
+                })
+            })
+                .then(res => validarSesion(res))
+                .then(data => {
+                    if (!data) return;
+
+                    if (data.error) {
+                        mostrarAlerta(data.error, 'danger');
+                        return;
+                    }
+
+                    mostrarAlerta('Doctor registrado correctamente', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = 'doctores.html';
+                    }, 1200);
+                })
+                .catch(() => {
+                    mostrarAlerta('Error al registrar doctor', 'danger');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Guardar';
+                });
+        }
+
+        function validarSesion(res) {
+            if (res.status === 401 || res.status === 403) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            return res.json();
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            document.getElementById('alerta').innerHTML = `
+        <div class="alert alert-${tipo} alert-dismissible fade show">
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+        }
+
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
