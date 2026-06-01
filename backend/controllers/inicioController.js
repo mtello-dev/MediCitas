@@ -29,9 +29,9 @@ const getInicio = (req, res) => {
                     'historial'
                 ],
                 resumen: {
-                    total_usuarios: usuarios[0].total,
-                    total_citas: citas[0].total
-                }
+                    Total_Usuarios: usuarios[0].total,
+                    Total_Citas: citas[0].total
+              }
             });
 
         });
